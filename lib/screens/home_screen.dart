@@ -1,90 +1,154 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   final AudioPlayer audioPlayer = AudioPlayer();
   final List<String> whiteKeys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-  final List<String> blackKeys = ['C#', 'D#', 'E#', 'F#', 'G#', 'A#', 'B#'];
+  final List<String> blackKeys = ['C#', 'D#', 'F#', 'G#', 'A#'];
+  bool isKeyPressed = false;
+  String? pressedKey;
 
   void playSound(String note) {
     audioPlayer.play(AssetSource('notes/$note.mp3'));
   }
 
-  HomeScreen({super.key});
+  void onKeyPressed(String key) {
+    setState(() {
+      isKeyPressed = true;
+      pressedKey = key;
+    });
+    playSound(key);
+    Future.delayed(const Duration(milliseconds: 100), () {
+      setState(() {
+        isKeyPressed = false;
+        pressedKey = null;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: Row(
-            children: whiteKeys.map((key) {
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => playSound(key),
-                  child: Container(
-                    margin: EdgeInsets.all(1),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: Colors.black),
-                    ),
-                    child: Center(child: Text(key)),
-                  ),
-                ),
-              );
-            }).toList(),
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color.fromARGB(255, 255, 255, 255),
+              const Color.fromARGB(255, 167, 176, 180)
+            ],
           ),
         ),
-        Expanded(
-          child: Stack(
-            children: [
-              Row(
+        child: Column(
+          children: [
+            // White Keys
+            Expanded(
+              child: Row(
                 children: whiteKeys.map((key) {
                   return Expanded(
-                    child: Container(
-                      margin: EdgeInsets.all(1),
-                      color: Colors.transparent,
+                    child: GestureDetector(
+                      onTap: () => onKeyPressed(key),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 100),
+                        margin: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: pressedKey == key && isKeyPressed
+                              ? Colors
+                                  .grey[300] // Lighten the color when pressed
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 5,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            key,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: pressedKey == key && isKeyPressed
+                                  ? Colors.black
+                                  : Colors.black.withOpacity(0.7),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   );
                 }).toList(),
               ),
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 0,
-                bottom: 0,
-                child: Row(
-                  children: whiteKeys.map((key) {
+            ),
+            // Black Keys
+            SizedBox(
+              height: 150,
+              child: Row(
+                children: [
+                  // Space
+                  const Expanded(flex: 1, child: SizedBox()),
+                  // Black keys
+                  ...whiteKeys.map((key) {
                     if (blackKeys.contains('$key#')) {
                       return Expanded(
+                        flex: 2,
                         child: GestureDetector(
-                          onTap: () => playSound('$key#'),
-                          child: Container(
-                            margin: EdgeInsets.all(1),
-                            width: 40, // Adjust width for black keys
+                          onTap: () => onKeyPressed('$key#'),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 100),
+                            margin: const EdgeInsets.all(2),
                             decoration: BoxDecoration(
-                              color: Colors.black,
-                              border: Border.all(color: Colors.white),
+                              color: pressedKey == '$key#' && isKeyPressed
+                                  ? Colors.grey[
+                                      800] // Lighten the color when pressed
+                                  : Colors.black,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.5),
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
                             ),
                             child: Center(
                               child: Text(
                                 '$key#',
-                                style: TextStyle(color: Colors.white),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: pressedKey == '$key#' && isKeyPressed
+                                      ? Colors.white.withOpacity(0.8)
+                                      : Colors.white,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       );
                     } else {
-                      return Expanded(child: Container());
+                      return const Expanded(flex: 2, child: SizedBox());
                     }
-                  }).toList(),
-                ),
+                  }),
+                  // Spacer for the last white key (B)
+                  const Expanded(flex: 1, child: SizedBox()),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
